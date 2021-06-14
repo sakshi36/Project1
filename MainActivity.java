@@ -1,69 +1,76 @@
-package com.example.androidmysql;
+package com.example.helloworld;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.loader.content.AsyncTaskLoader;
 
-import android.os.AsyncTask;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.StrictMode;
+//import android.util.Log;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.Button;
-import android.widget.TextView;
+//import android.widget.TextView;
+import android.widget.TimePicker;
+import android.widget.Toast;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.util.Calendar;
+
+//import HttpClient.HttpClient;
 
 public class MainActivity extends AppCompatActivity {
-    TextView text, errorText;
-    Button show;
-
-
+   // TextView tv;
+    TimePicker timePicker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        text = (TextView)findViewById(R.id.textView);
-        errorText = (TextView)findViewById(R.id.textView2);
-        show = (Button)findViewById(R.id.button);
+        //tv = (TextView) findViewById(R.id.text);
+        StrictMode.enableDefaults();
 
-        show.setOnClickListener(new OnClickListener() {
+        timePicker = (TimePicker) findViewById(R.id.timepicker);
+
+        findViewById(R.id.buttonSetAlarm).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new Task().execute();
+
+                Calendar calendar = Calendar.getInstance();
+                if(Build.VERSION.SDK_INT>=23) {
+                    calendar.set(
+                            calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH),
+                            calendar.get(Calendar.DAY_OF_MONTH), timePicker.getHour(),
+                            timePicker.getMinute(), 0
+
+                    );
+                }else {
+                    calendar.set(
+                            calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH),
+                            calendar.get(Calendar.DAY_OF_MONTH), timePicker.getCurrentHour(),
+                            timePicker.getCurrentMinute(), 0
+
+                    );
+                }
+                setAlarm(calendar.getTimeInMillis());
+
 
             }
         });
-
-        }
-        class Task extends AsyncTask<Void,Void,Void> {
-            String records = "", error = "";
-
-
-            @Override
-            protected Void doInBackground(Void... voids) {
-                try {
-                    Class.forName("com.mysql.jdbc.Driver");
-                    Connection connection = DriverManager.getConnection("jdbc:mysql://192.168.1.1/android",
-                            " andro","andro");
-                    Statement statement = connection.createStatement();
-                    ResultSet resultSet = statement.executeQuery("SELECT * FROM android.tasks");
-
-                    while (resultSet.next()){
-                        records+= resultSet.getString(1)+""+resultSet.getString(2)+"\n";
-
-                    }
-                } catch (Exception e) {
-                    error = error.toString();
-
-                    return null;
-                }
-
-
-    private void onPostExecute() {
-                    }
     }
+
+    private void setAlarm(long timeInMillis) {
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+
+        Intent intent = new Intent(this, MyAlarm.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0,
+                intent, 0);
+        alarmManager.setRepeating(AlarmManager.RTC, timeInMillis,
+                AlarmManager.INTERVAL_DAY, pendingIntent);
+        Toast.makeText(this, "Alaram is set ",Toast.LENGTH_SHORT).show();
+
+
+    }
+
+
 }
-        }
